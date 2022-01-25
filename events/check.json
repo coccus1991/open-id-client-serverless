@@ -1,0 +1,64 @@
+{
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "headers": {
+            "cookie": [
+              {
+                "key": "Cookie",
+                "value": "authorization=eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJWV0NiNkNRWHdEa3Fpa2c5QzVRU0NRQ2RqZGtJN3FQT2E2Tkd6TXFKaTR3In0.eyJleHAiOjE2NDMwMzc0NjYsImlhdCI6MTY0MzAzMzg2NiwiYXV0aF90aW1lIjoxNjQzMDMyMDc2LCJqdGkiOiIyMjg1YTBjMy1iMzMyLTQwM2ItYmU5My01NmUwNmY1ZmVmOWIiLCJpc3MiOiJodHRwczovL2lkcC5kYy1kZXZvcHMuaXQvYXV0aC9yZWFsbXMvdG9vbG1hbmFnZXIiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiOTI1M2I1ZDItYTg5ZC00NjBkLWFkYWQtODU0N2ZmYmIyYjg4IiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiYXdzIiwic2Vzc2lvbl9zdGF0ZSI6ImI4NjlkZGNhLTE2MDUtNDFiYy1hM2YxLWVmYzBhOWU3YzVlMyIsImFjciI6IjAiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIGVtYWlsIHByb2ZpbGUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJEYXZpZGUgQ29jY28iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJjb2NjdXMiLCJnaXZlbl9uYW1lIjoiRGF2aWRlIiwiZmFtaWx5X25hbWUiOiJDb2NjbyIsImVtYWlsIjoiZGF2aWRlY29jY28xQGdtYWlsLmNvbSJ9.RhtJa_VGmCn_1u-bXUw0CzJq6dZEOYlM6V17qnzzDvCMazkzfO3FWlfaycIDlL9NLJPQ8Vc0yazsDCmVOpGqgE4x7tLqBrd99kJKYmpi3cOXBIZ8y8U3XDIGyVixN-VnuRjBAp2ZgDw7neoRT2KDCWPfnxX43vFl9elnAOzVef_9iFSmw9WB38gp-UoQuRbEsaZgedtQqGahSB78WxlY-UMHZowgInAd92GzqgkJ6CFZxxypYSnm5VtKev-2zUKCNuBwvWqYcgnY_rtctveGUdMnO_NzWmn_uSacMcH8vLJ6yHg-HVPgYZNYgJUN3FsdCBi87zUl1T8NDFLEFCgMRQ"
+              }
+            ],
+            "host": [
+              {
+                "key": "Host",
+                "value": "d123.cf.net"
+              }
+            ],
+            "user-name": [
+              {
+                "key": "User-Name",
+                "value": "CloudFront"
+              }
+            ]
+          },
+          "clientIp": "2001:cdba::3257:9652",
+          "uri": "/ciccia",
+          "method": "GET",
+          "origin": {
+            "custom": {
+              "customHeaders": {},
+              "domainName": "localhost:3000",
+              "keepaliveTimeout": 5,
+              "path": "",
+              "port": 80,
+              "protocol": "http",
+              "readTimeout": 30,
+              "sslProtocols": [
+                "TLSv1",
+                "TLSv1.1",
+                "TLSv1.2"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "200",
+          "statusDescription": "OK",
+          "headers": {
+            "x-cache": [
+              {
+                "key": "X-Cache",
+                "value": "Hello from Cloudfront"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

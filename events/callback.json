@@ -1,0 +1,59 @@
+{
+  "Records": [
+    {
+      "cf": {
+        "config": {
+          "distributionId": "EXAMPLE"
+        },
+        "request": {
+          "headers": {
+            "host": [
+              {
+                "key": "Host",
+                "value": "d123.cf.net"
+              }
+            ],
+            "user-name": [
+              {
+                "key": "User-Name",
+                "value": "CloudFront"
+              }
+            ]
+          },
+          "clientIp": "2001:cdba::3257:9652",
+          "uri": "/cb",
+          "querystring": "session_state=0a9f864e-1e13-45ca-912d-02bb7688761d&code=f216dec1-e535-4e26-b297-bcbb8d19fd61.0a9f864e-1e13-45ca-912d-02bb7688761d.b371d6df-aa02-41cb-a743-49cae2c59bb9",
+          "method": "GET",
+          "origin": {
+            "custom": {
+              "customHeaders": {},
+              "domainName": "localhost:3000",
+              "keepaliveTimeout": 5,
+              "path": "",
+              "port": 80,
+              "protocol": "http",
+              "readTimeout": 30,
+              "sslProtocols": [
+                "TLSv1",
+                "TLSv1.1",
+                "TLSv1.2"
+              ]
+            }
+          }
+        },
+        "response": {
+          "status": "200",
+          "statusDescription": "OK",
+          "headers": {
+            "x-cache": [
+              {
+                "key": "X-Cache",
+                "value": "Hello from Cloudfront"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
