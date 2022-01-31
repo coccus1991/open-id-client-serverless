@@ -1,22 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Parameters:
-  ClientId:
-    Description: 'Required'
-    Type: 'String'
-
-  ClientSecret:
-    Description: 'Required'
-    Type: 'String'
-
-  IdpMetadataUrl:
-    Description: 'Required'
-    Type: 'String'
-
-  Domain:
-    Description: 'Required'
-    Type: 'String'
-
 Resources:
   OpenIdClientServless:
     Type: AWS::Serverless::Function
@@ -24,12 +7,6 @@ Resources:
       CodeUri: open-id-client-serverless/
       Handler: app.lambdaHandler
       Runtime: nodejs14.x
-      Environment:
-        Variables:
-          CLIENT_ID: !Ref ClientId
-          CLIENT_SECRET: !Ref ClientSecret
-          IDP_METADATA_URL: !Ref IdpMetadataUrl
-          DOMAIN: !Ref Domain
       Architectures:
         - x86_64
 

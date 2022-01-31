@@ -10,6 +10,42 @@ const checkEvent = require("../events/check.json");
 
 const {OAuth2Server} = require('oauth2-mock-server');
 
+const client_id = process.env.CLIENT_ID;
+const client_secret = process.env.CLIENT_SECRET;
+const domain = process.env.DOMAIN;
+const idp_metadata_url = process.env.IDP_METADATA_URL;
+
+const customHeaders = {
+    "client_id": [
+        {
+            "key": "CLIENT_ID",
+            "value": client_id
+        }
+    ],
+    "client_secret": [
+        {
+            "key": "CLIENT_SECRET",
+            "value": client_secret
+        }
+    ],
+    "domain": [
+        {
+            "key": "DOMAIN",
+            "value": domain
+        }
+    ],
+    "idp_metadata_url": [
+        {
+            "key": "IDP_METADATA_URL",
+            "value": idp_metadata_url
+        }
+    ]
+};
+
+loginEvent.Records[0].cf.request.origin.custom.customHeaders = customHeaders;
+callbackEvent.Records[0].cf.request.origin.custom.customHeaders = customHeaders;
+checkEvent.Records[0].cf.request.origin.custom.customHeaders = customHeaders;
+
 const server = new OAuth2Server();
 
 describe('Login auth code flow', function () {

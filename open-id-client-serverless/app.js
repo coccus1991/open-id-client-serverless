@@ -1,13 +1,13 @@
 const {Issuer} = require('openid-client');
 const jwktopem = require("jwk-to-pem");
 const jwt = require("jsonwebtoken");
-const fetch = require('node-fetch-commonjs');
+const axios = require('axios');
 
 // ENV VAR
-const client_id = process.env.CLIENT_ID;
-const client_secret = process.env.CLIENT_SECRET;
-const domain = process.env.DOMAIN;
-const idp_metadata_url = process.env.IDP_METADATA_URL;
+let client_id = null;
+let client_secret = null;
+let domain = null;
+let idp_metadata_url = null;
 
 let idpIssuer = null;
 let jwk = null;
@@ -21,14 +21,14 @@ async function discoverMetadata() {
     }
 
     try {
-        const response = await fetch(idpIssuer.metadata.jwks_uri).then(response => response.json());
+        const {data} = await axios.get(idpIssuer.metadata.jwks_uri);
 
-        if (response.keys === undefined || !Array.isArray(response.keys))
+        if (data.keys === undefined || !Array.isArray(data.keys))
             throw new Error("jwk invalid or missing")
 
-        const sig = response.keys.find(e => e.use !== undefined && e.use === "sig")
+        const sig = data.keys.find(e => e.use !== undefined && e.use === "sig")
 
-        jwk = sig || response.keys[0];
+        jwk = sig || data.keys[0];
 
     } catch (e) {
         throw e;
@@ -176,17 +176,22 @@ module.exports.lambdaHandler = async (event, context, callback) => {
     const request = event.Records[0].cf.request;
     const split = request.uri.split("/");
 
-    //
-    if (!idpIssuer || !jwk)
+    if (split.length > 1 && split[1] === "api")
+        return callback(null, await api(request))
+
+    if (!idpIssuer || jwk === null)
         try {
+            client_id = request.origin.custom.customHeaders.client_id[0].value;
+            client_secret = request.origin.custom.customHeaders.client_secret[0].value;
+            domain = request.origin.custom.customHeaders.domain[0].value;
+            idp_metadata_url = request.origin.custom.customHeaders.idp_metadata_url[0].value;
             await discoverMetadata();
         } catch (e) {
-            return {
+            return callback(null, {
                 status: '500',
                 body: "Error fetch metadata IDP",
-            }
+            });
         }
-
 
     if (split.length > 1)
         switch (split[1]) {
@@ -194,8 +199,6 @@ module.exports.lambdaHandler = async (event, context, callback) => {
                 return callback(null, await login(request))
             case "cb":
                 return callback(null, await cb(request))
-            case "api":
-                return callback(null, await api(request))
         }
 
     return callback(null, await check(request))
