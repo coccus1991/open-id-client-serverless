@@ -3,20 +3,92 @@
 const app = require('../../app.js');
 const chai = require('chai');
 const expect = chai.expect;
-var event, context;
 
-describe('Tests index', function () {
-    it('verifies successful response', async () => {
-        const result = await app.lambdaHandler(event, context)
+const loginEvent = require("../events/login.json");
+const callbackEvent = require("../events/callback.json");
+const checkEvent = require("../events/check.json");
 
-        expect(result).to.be.an('object');
-        expect(result.statusCode).to.equal(200);
-        expect(result.body).to.be.an('string');
+const {OAuth2Server} = require('oauth2-mock-server');
 
-        let response = JSON.parse(result.body);
+const server = new OAuth2Server();
 
-        expect(response).to.be.an('object');
-        expect(response.message).to.be.equal("hello world");
-        // expect(response.location).to.be.an("string");
+describe('Login auth code flow', function () {
+    let serverPort = 8080;
+
+    before(async function () {
+        await server.issuer.keys.generate('RS256');
+        await server.start(serverPort, 'localhost');
+    })
+
+    it('Get redirect to login page response', async () => {
+        await app.lambdaHandler(loginEvent, null, function (a, response) {
+            const expected = {
+                "status": "302",
+                "body": "",
+                "headers": {
+                    "location": [{
+                        "key": "Location",
+                        "value": `http://localhost:${serverPort}/authorize?client_id=${process.env.CLIENT_ID}&scope=openid&response_type=code&redirect_uri=${encodeURIComponent(process.env.DOMAIN + '/cb')}`
+                    }]
+                }
+            };
+
+            expect(response).to.be.deep.equal(expected)
+        });
     });
+
+    it('Callback path get token auth code flow', async () => {
+        await app.lambdaHandler(callbackEvent, null, function (a, response) {
+            expect(response).to.contain({
+                status: "302"
+            });
+
+            expect(response).to.have.nested.property("headers.set-cookie")
+
+            const token = response.headers["set-cookie"][0].value.split(";")[0].replace(/^authorization\=/, "")
+
+            expect(token).not.be.empty.and.not.be.undefined.and.not.be.null
+        });
+    });
+
+    it('Success check valid authorization token', async () => {
+        const token = await server.issuer.buildToken();
+
+        checkEvent.Records[0].cf.request.headers.cookie = [
+            {
+                "key": "Cookie",
+                "value": `authorization=${token}`
+            }
+        ];
+
+        await app.lambdaHandler(checkEvent, null, function (a, response) {
+            expect(response).to.be.deep.equal(checkEvent.Records[0].cf.request)
+        })
+    });
+
+    it('Fail check invalid authorization token', async () => {
+        checkEvent.Records[0].cf.request.headers.cookie = [
+            {
+                "key": "Cookie",
+                "value": `authorization=eyJraWQiOiJjYmNlNTRiNTZiMDU5NDY0MjEyNzNkZjQyYzM5NzM0Y2E3YTJiNTI3NWI0ZmIxNzZiZWU1NmI4YmI5YzE0NGM0ZGU0OTliOTFlY2UwZmI4ZSIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAiLCJpYXQiOjE2NDM2MzgwNzAsImV4cCI6MTY0MzY0MTY3MCwibmJmIjoxNjQzNjM4MDYwfQ.tShRRSDkN5Tm4543lm6PEwNyex5uTTLKOEYOGNYn-k7IoZpAVvnlFoh2JnVJ8ooxo9ucXJo19LOchPvBVWOVtb05haK2_C6UW36xvBFoLf1j4tPz_hkxrPiPK0KoA8p-P0tJuldhXRZNaDR7RPuQ3p8qDjXS3tI6Ht9YmNnLOGTVwm73Pu04tLw65ZVj9CxDU3ynIUr8akqRUlkZHw3MW90YiSJl8n7CClmPLweqCW0IcMDiVdqnRe3ANcQWhhAPG1axqB_R7st_wD1dwZqWPuI3q1tzUbyAO28GQuHro0-0keD4RE50MS4S9VQL9e-VHcX461mBqBCMnWS42zF7HA`
+            }
+        ];
+
+        await app.lambdaHandler(checkEvent, null, function (a, response) {
+            expect(response).to.be.deep.equal({
+                status: '302',
+                body: "",
+                headers: {
+                    'location': [{
+                        key: 'Location',
+                        value: "/login"
+                    }]
+                },
+            });
+        })
+    });
+
+    after(async function () {
+        await server.stop();
+    })
 });

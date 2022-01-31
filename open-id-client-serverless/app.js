@@ -1,12 +1,13 @@
 const {Issuer} = require('openid-client');
 const jwktopem = require("jwk-to-pem");
 const jwt = require("jsonwebtoken");
-const fetch = require('node-fetch');
+const fetch = require('node-fetch-commonjs');
 
 // ENV VAR
 const client_id = process.env.CLIENT_ID;
 const client_secret = process.env.CLIENT_SECRET;
 const domain = process.env.DOMAIN;
+const idp_metadata_url = process.env.IDP_METADATA_URL;
 
 let idpIssuer = null;
 let jwk = null;
@@ -14,13 +15,21 @@ let jwk = null;
 
 async function discoverMetadata() {
     try {
-        idpIssuer = await Issuer.discover(process.env.IDP_METADATA_URL);
+        idpIssuer = await Issuer.discover(idp_metadata_url);
     } catch (e) {
         throw e;
     }
 
     try {
-        jwk = await fetch(idpIssuer.metadata.jwks_uri).then(response => response.json());
+        const response = await fetch(idpIssuer.metadata.jwks_uri).then(response => response.json());
+
+        if (response.keys === undefined || !Array.isArray(response.keys))
+            throw new Error("jwk invalid or missing")
+
+        const sig = response.keys.find(e => e.use !== undefined && e.use === "sig")
+
+        jwk = sig || response.keys[0];
+
     } catch (e) {
         throw e;
     }
@@ -106,7 +115,7 @@ async function cb(request) {
 async function check(request) {
     let token = null;
 
-    if (typeof request.headers.cookie !== undefined && Array.isArray(request.headers.cookie)) {
+    if (request.headers.cookie !== undefined && Array.isArray(request.headers.cookie)) {
         const cookies = parseCookies(request.headers.cookie[0].value);
 
         if (typeof cookies["authorization"] !== undefined) {
@@ -148,7 +157,7 @@ async function api(request) {
     //rewrite rule for removing the prefix api in origin call
     request.uri = request.uri.replace(/^\/api/, "")
 
-    if (typeof request.headers.cookie !== undefined && Array.isArray(request.headers.cookie)) {
+    if (request.headers.cookie !== undefined && Array.isArray(request.headers.cookie)) {
         const cookies = parseCookies(request.headers.cookie[0].value)
 
 
