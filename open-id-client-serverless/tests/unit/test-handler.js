@@ -7,6 +7,7 @@ const expect = chai.expect;
 const loginEvent = require("../events/login.json");
 const callbackEvent = require("../events/callback.json");
 const checkEvent = require("../events/check.json");
+const apiEvent = require("../events/api.json");
 
 const {OAuth2Server} = require('oauth2-mock-server');
 
@@ -56,7 +57,7 @@ describe('Login auth code flow', function () {
         await server.start(serverPort, 'localhost');
     })
 
-    it('Get redirect to login page response', async () => {
+    it('It should redirect to IDP login page', async () => {
         await app.lambdaHandler(loginEvent, null, function (a, response) {
             const expected = {
                 "status": "302",
@@ -73,7 +74,7 @@ describe('Login auth code flow', function () {
         });
     });
 
-    it('Callback path get token auth code flow', async () => {
+    it('It should after to have completed the code flow with the IDP provider, set a cookie named "authorization" with the "access_token"', async () => {
         await app.lambdaHandler(callbackEvent, null, function (a, response) {
             expect(response).to.contain({
                 status: "302"
@@ -81,13 +82,13 @@ describe('Login auth code flow', function () {
 
             expect(response).to.have.nested.property("headers.set-cookie")
 
-            const token = response.headers["set-cookie"][0].value.split(";")[0].replace(/^authorization\=/, "")
+            const access_token = response.headers["set-cookie"][0].value.split(";")[0].replace(/^authorization\=/, "")
 
-            expect(token).not.be.empty.and.not.be.undefined.and.not.be.null
+            expect(access_token).not.be.empty.and.not.be.undefined.and.not.be.null
         });
     });
 
-    it('Success check valid authorization token', async () => {
+    it('it should have success checking a valid authorization token', async () => {
         const token = await server.issuer.buildToken();
 
         checkEvent.Records[0].cf.request.headers.cookie = [
@@ -102,7 +103,7 @@ describe('Login auth code flow', function () {
         })
     });
 
-    it('Fail check invalid authorization token', async () => {
+    it('It should fail the check for invalid authorization token', async () => {
         checkEvent.Records[0].cf.request.headers.cookie = [
             {
                 "key": "Cookie",
@@ -126,5 +127,21 @@ describe('Login auth code flow', function () {
 
     after(async function () {
         await server.stop();
-    })
+    });
 });
+
+describe('Test api endpoint', function () {
+    it('It should remove the prefix path "api" from the uri parameter', async function () {
+        await app.lambdaHandler(apiEvent, null, function (a, response) {
+            expect(response).to.have.property("uri", "/route")
+        })
+    });
+
+    it('It should take the "access_token" from the cookie named "authorization" and inject in the response header as Authorization Bearer header', async function () {
+        const expected = "Bearer dsfsd45xds";
+
+        await app.lambdaHandler(apiEvent, null, function (a, response) {
+            expect(response).to.have.nested.property("headers.authorization[0].value", expected)
+        })
+    });
+})

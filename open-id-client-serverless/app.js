@@ -173,7 +173,7 @@ async function api(request) {
 }
 
 module.exports.lambdaHandler = async (event, context, callback) => {
-    const request = event.Records[0].cf.request;
+    const request = Object.assign({}, event.Records[0].cf.request);
     const split = request.uri.split("/");
 
     if (split.length > 1 && split[1] === "api")
