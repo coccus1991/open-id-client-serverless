@@ -2,6 +2,7 @@ const {Issuer} = require('openid-client');
 const jwktopem = require("jwk-to-pem");
 const jwt = require("jsonwebtoken");
 const axios = require('axios');
+const nestedProperty = require("nested-property");
 
 // ENV VAR
 let client_id = null;
@@ -52,7 +53,7 @@ function parseCookies(cookieHeader) {
     return list;
 }
 
-async function login(request) {
+async function login() {
     const client = new idpIssuer.Client({
         client_id,
         client_secret,
@@ -113,15 +114,8 @@ async function cb(request) {
 }
 
 async function check(request) {
-    let token = null;
-
-    if (request.headers.cookie !== undefined && Array.isArray(request.headers.cookie)) {
-        const cookies = parseCookies(request.headers.cookie[0].value);
-
-        if (typeof cookies["authorization"] !== undefined) {
-            token = cookies["authorization"];
-        }
-    }
+    const cookies = (nestedProperty.has(request, "headers.cookie.0") && parseCookies(request.headers.cookie[0].value)) || {};
+    const token = nestedProperty.get(cookies, "authorization");
 
     if (!token)
         return {
@@ -154,19 +148,13 @@ async function check(request) {
 }
 
 async function api(request) {
-    //rewrite rule for removing the prefix api in origin call
-    request.uri = request.uri.replace(/^\/api/, "")
+    const cookies = (nestedProperty.has(request, "headers.cookie.0") && parseCookies(request.headers.cookie[0].value)) || {};
 
-    if (request.headers.cookie !== undefined && Array.isArray(request.headers.cookie)) {
-        const cookies = parseCookies(request.headers.cookie[0].value)
-
-
-        if (typeof cookies["authorization"] !== undefined) {
-            request.headers['authorization'] = [{
-                "key": "Authorization",
-                "value": "Bearer " + cookies["authorization"]
-            }]
-        }
+    if (nestedProperty.has(cookies, "authorization")) {
+        nestedProperty.set(request, "headers.authorization.0", {
+            "key": "Authorization",
+            "value": "Bearer " + cookies["authorization"]
+        })
     }
 
     return request;
@@ -196,7 +184,7 @@ module.exports.lambdaHandler = async (event, context, callback) => {
     if (split.length > 1)
         switch (split[1]) {
             case "login":
-                return callback(null, await login(request))
+                return callback(null, await login())
             case "cb":
                 return callback(null, await cb(request))
         }

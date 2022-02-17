@@ -103,7 +103,7 @@ describe('Login auth code flow', function () {
         })
     });
 
-    it('It should fail the check for invalid authorization token', async () => {
+    it('It should fail the check for invalid authorization cookie token', async () => {
         checkEvent.Records[0].cf.request.headers.cookie = [
             {
                 "key": "Cookie",
@@ -125,18 +125,27 @@ describe('Login auth code flow', function () {
         })
     });
 
+    it('It should fail the check for missing authorization cookie token', async () => {
+        await app.lambdaHandler(checkEvent, null, function (a, response) {
+            expect(response).to.be.deep.equal({
+                status: '302',
+                body: "",
+                headers: {
+                    'location': [{
+                        key: 'Location',
+                        value: "/login"
+                    }]
+                },
+            });
+        })
+    });
+
     after(async function () {
         await server.stop();
     });
 });
 
 describe('Test api endpoint', function () {
-    it('It should remove the prefix path "api" from the uri parameter', async function () {
-        await app.lambdaHandler(apiEvent, null, function (a, response) {
-            expect(response).to.have.property("uri", "/route")
-        })
-    });
-
     it('It should take the "access_token" from the cookie named "authorization" and inject in the response header as Authorization Bearer header', async function () {
         const expected = "Bearer dsfsd45xds";
 
